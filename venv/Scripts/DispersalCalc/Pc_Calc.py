@@ -1,5 +1,47 @@
 import numpy as np
 import csv
+from math import sqrt
+
+def calc_dpck_connector(node_id, p_matrix, scores, dpck, dpck_intra, dpck_flux):
+    dpck_connector = dpck - dpck_flux - dpck_intra
+
+    return dpck_connector
+
+def calc_dpck_flux(node_id, p_matrix, scores, init_pc, dims):
+    row = p_matrix[node_id, :]
+    col = p_matrix[:, node_id]
+    # create a matrix with only row node_id and column node_id filled in, with the rest zeroes
+    cross_matrix = np.zeros((dims, dims))
+    cross_matrix[:, node_id] = col
+    cross_matrix[node_id, :] = row
+    cross_matrix[node_id, node_id] = 0
+    dpck_flux = calc_pc(cross_matrix, scores)
+
+    return (dpck_flux / init_pc) * 100
+
+def calc_dpck_intra(node_id, scores, init_pc):
+    d_pck_intra = scores[node_id]*scores[node_id]
+
+    return (d_pck_intra / init_pc)*100
+
+def calc_dpck(node_id, g_removed, scores, init_pc):
+    save = scores[node_id]
+    scores[node_id] = 0
+    removed_pc = calc_pc(g_removed, scores)
+    scores[node_id] = save
+    dpck = 100*(init_pc - removed_pc)/init_pc
+
+    return dpck
+
+def make_removed(node_id, g):
+    g_removed = g.copy()
+    g_removed.delete_edges(g_removed.incident(vertex=node_id, mode=3))
+    g_removed_probs = np.exp(-1 * np.array(g.shortest_paths_dijkstra(weights='weight')))
+    return g_removed_probs
+
+def calc_pc(p_matrix, scores):
+    numerator = np.sum(np.dot(scores, np.dot(scores.transpose(), p_matrix)))
+    return numerator
 
 # TODO define standard input file descriptions
 def load_scores(colname):
@@ -12,15 +54,30 @@ def load_scores(colname):
         return scores_arr
 
 # TODO define standard input file descriptions
-def load_matrix():
+def load_matrix(patch_count, file_path):
     mat_file = open("R_to_Py_connmat_reduced", "r")
     data = mat_file.readlines()
     mat_file.close()
-    data_arr = np.zeros((12292, 12292), dtype=np.float64)
+    dim = math.sqrt(len(data))
+    if (patch_count != dim):
+        raise Exception("Number of rows does not equal the square of the number of patches")
+    data_arr = np.zeros((dim, dim), dtype=np.float64)
     for line in data:
         i, j, x = str.split(line, "\t")
         data_arr[int(i) - 1, int(j) - 1] = x
     return data_arr
 
+def calc_dpc_all(num_patches):
+    # load data and set up
+    connmat_reduced = load_matrix(num_patches)
+    scores = load_scores()
+    min_score = np.amin(scores)
+    scores = scores + abs(min_score)
 
+    # create igraph graph object from loaded adjacency matrix
+    g = igraph.Graph.Adjacency((connmat_reduced > 0).tolist(), mode="DIRECTED")
+    # Take the negative log of the edge probabilities
+    g.es['weight'] = -1 * np.log(connmat_reduced[connmat_reduced.nonzero()])
+    # find the highest probability path between patches using dijkstra with 1 on diag and then undoing -log operation
+    init_probs = np.exp(-1 * np.array(g.shortest_paths_dijkstra(weights='weight')))
 
