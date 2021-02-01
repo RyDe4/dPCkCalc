@@ -67,7 +67,7 @@ def load_matrix(patch_count, file_path):
         data_arr[int(i) - 1, int(j) - 1] = x
     return data_arr
 
-def calc_dpc_all(num_patches):
+def calc_dpc_all(num_patches, start_patch, end_patch):
     # load data and set up
     connmat_reduced = load_matrix(num_patches)
     scores = load_scores()
@@ -81,3 +81,28 @@ def calc_dpc_all(num_patches):
     # find the highest probability path between patches using dijkstra with 1 on diag and then undoing -log operation
     init_probs = np.exp(-1 * np.array(g.shortest_paths_dijkstra(weights='weight')))
 
+    # calculate the probability of connectivity for the landscape
+    pc = calc_pc(init_probs, scores)
+
+    # initialize arrays to store results
+    range = end_patch - start_patch + 1
+    dpck = np.zeros(range, dtype=np.float64)
+    dpck_flux = np.zeros(range, dtype=np.float64)
+    dpck_intra = np.zeros(range, dtype=np.float64)
+    dpck_connector = np.zeros(range, dtype=np.float64)
+    for i in range(start_patch, end_patch):
+        g_removed_probs = make_removed(i, g)
+        dpck[i] = calc_dpck(i, g_removed_probs, scores, pc)
+        dpck_flux[i] = calc_dpck_flux(i, connmat_reduced, scores, pc, 12292)
+        dpck_intra[i] = calc_dpck_intra(i, scores, pc)
+        dpck_connector[i] = calc_dpck_connector(i, connmat_reduced, scores, dpck[i], dpck_intra[i], dpck_flux[i])
+        print("Done patch " + str(i))
+
+    print("Done calculating values")
+    data_file = open("Patch_Con_Data_corrected_2_3999-7000", "w")
+    print("Writing Values to File")
+    # write values to file
+    for i in range(start_patch, end_patch):
+        data_file.write(str(i) + "\t" + str(dpck[i]) + "\t" + str(dpck_intra[i]) + "\t" +
+                        str(dpck_flux[i]) + "\t" + str(dpck_connector[i]) + "\n")
+    data_file.close()
