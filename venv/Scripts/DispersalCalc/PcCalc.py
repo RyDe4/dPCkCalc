@@ -1,6 +1,7 @@
 import numpy as np
 import csv
-from math import sqrt
+import igraph
+import math
 
 def calc_dpck_connector(node_id, p_matrix, scores, dpck, dpck_intra, dpck_flux):
     dpck_connector = dpck - dpck_flux - dpck_intra
@@ -15,7 +16,7 @@ def calc_dpck_flux(node_id, p_matrix, scores, init_pc, dims):
     cross_matrix[:, node_id] = col
     cross_matrix[node_id, :] = row
     cross_matrix[node_id, node_id] = 0
-    dpck_flux = calc_pc(cross_matrix, scores)
+    dpck_flux = calc_pc_numerator(cross_matrix, scores)
 
     return (dpck_flux / init_pc) * 100
 
@@ -27,7 +28,7 @@ def calc_dpck_intra(node_id, scores, init_pc):
 def calc_dpck(node_id, g_removed, scores, init_pc):
     save = scores[node_id]
     scores[node_id] = 0
-    removed_pc = calc_pc(g_removed, scores)
+    removed_pc = calc_pc_numerator(g_removed, scores)
     scores[node_id] = save
     dpck = 100*(init_pc - removed_pc)/init_pc
 
@@ -36,10 +37,10 @@ def calc_dpck(node_id, g_removed, scores, init_pc):
 def make_removed(node_id, g):
     g_removed = g.copy()
     g_removed.delete_edges(g_removed.incident(vertex=node_id, mode=3))
-    g_removed_probs = np.exp(-1 * np.array(g.shortest_paths_dijkstra(weights='weight')))
+    g_removed_probs = np.exp(-1 * np.array(g_removed.shortest_paths_dijkstra(weights='weight')))
     return g_removed_probs
 
-def calc_pc(p_matrix, scores):
+def calc_pc_numerator(p_matrix, scores):
     numerator = np.sum(np.dot(scores, np.dot(scores.transpose(), p_matrix)))
     return numerator
 
@@ -82,7 +83,7 @@ def calc_dpc_all(num_patches, start_patch, end_patch):
     init_probs = np.exp(-1 * np.array(g.shortest_paths_dijkstra(weights='weight')))
 
     # calculate the probability of connectivity for the landscape
-    pc = calc_pc(init_probs, scores)
+    pc = calc_pc_numerator(init_probs, scores)
 
     # initialize arrays to store results
     range = end_patch - start_patch + 1

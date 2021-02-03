@@ -29,7 +29,7 @@ def calc_dpck_intra(node_id, scores, init_pc):
 def make_removed(node_id, g):
     g_removed = g.copy()
     g_removed.delete_edges(g_removed.incident(vertex=node_id, mode=3))
-    g_removed_probs = np.exp(-1 * np.array(g.shortest_paths_dijkstra(weights='weight')))
+    g_removed_probs = np.exp(-1 * np.array(g_removed.shortest_paths_dijkstra(weights='weight')))
     return g_removed_probs
 
 def calc_dpck(node_id, g_removed, scores, init_pc):
@@ -48,7 +48,6 @@ def calc_dpck(node_id, g_removed, scores, init_pc):
 """
 def calc_pc(p_matrix, scores):
     numerator = np.sum(np.dot(scores, np.dot(scores.transpose(), p_matrix)))
-    # denom = (np.sum(scores)*np.sum(scores))
     return numerator
 
 
@@ -97,7 +96,7 @@ def main():
     dpck_flux = np.zeros(12292, dtype=np.float64)
     dpck_intra = np.zeros(12292, dtype=np.float64)
     dpck_connector = np.zeros(12292, dtype=np.float64)
-    for i in range(10000, 12292):
+    for i in range(0, 2000):
         g_removed_probs = make_removed(i, g)
         dpck[i] = calc_dpck(i, g_removed_probs, scores, pc)
         dpck_flux[i] = calc_dpck_flux(i, connmat_reduced, scores, pc, 12292)
