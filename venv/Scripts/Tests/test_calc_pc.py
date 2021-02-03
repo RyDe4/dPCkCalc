@@ -4,6 +4,7 @@ import igraph
 from DispersalCalc import calc_pc_numerator
 from DispersalCalc import make_removed
 from DispersalCalc import calc_dpck
+import pytest
 
 class MyTestCase(unittest.TestCase):
     testProbs1 = np.ndarray(shape=(4,4), buffer=np.array([0.1, 0.5, 0.0, 0.4,
@@ -27,9 +28,8 @@ class MyTestCase(unittest.TestCase):
         # find the highest probability path between patches using dijkstra with 1 on diag and then undoing -log operation
         init_probs = np.exp(-1 * np.array(g.shortest_paths_dijkstra(weights='weight')))
         g_removed_probs = make_removed(0, g)
-        print(g_removed_probs)
         init_pc = calc_pc_numerator(init_probs, self.testScores1)
-        self.assertEqual(calc_dpck(0, g_removed_probs, self.testScores1, init_pc), 18.23899371)
+        assert pytest.approx(calc_dpck(0, g_removed_probs, self.testScores1, init_pc), 0.000001) == 18.23899371
 
 if __name__ == '__main__':
     unittest.main()
