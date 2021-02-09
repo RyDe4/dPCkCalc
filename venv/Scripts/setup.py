@@ -5,5 +5,5 @@ setup(
     version = '0.0.x',
     description = '',
     py_modules = ["Pc_Calc"],
-    package_dir = {'': 'DispersalCals'}
+    package_dir = {'': 'DispersalCalc'}
 )

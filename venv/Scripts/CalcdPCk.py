@@ -62,21 +62,23 @@ def load_matrix():
     return data_arr
 
 
-def load_scores():
+def load_csv_data(column_name):
     with open("scaled_scores_latlong_reproj_SJ.csv") as scores_file:
         reader = csv.DictReader(scores_file)
         scores_list = list()
         for row in reader:
-            scores_list.append(float(row["Avg_rescor"]))
+            scores_list.append(float(row[column_name]))
         scores_arr = np.array(scores_list)
         return scores_arr
 
 
 def main():
     connmat_reduced = load_matrix()
-    scores = load_scores()
+    scores = load_csv_data("Avg_rescor")
     min_score = np.amin(scores)
     scores = scores + abs(min_score)
+    long = load_csv_data("Avg_longit")
+    lat = load_csv_data("Avg_latitu")
 
 
 
@@ -96,7 +98,7 @@ def main():
     dpck_flux = np.zeros(12292, dtype=np.float64)
     dpck_intra = np.zeros(12292, dtype=np.float64)
     dpck_connector = np.zeros(12292, dtype=np.float64)
-    for i in range(0, 2000):
+    for i in range(0, 3000):
         g_removed_probs = make_removed(i, g)
         dpck[i] = calc_dpck(i, g_removed_probs, scores, pc)
         dpck_flux[i] = calc_dpck_flux(i, connmat_reduced, scores, pc, 12292)
@@ -105,11 +107,11 @@ def main():
         print("Done patch " + str(i))
 
     print("Done calculating values")
-    data_file = open("Patch_Con_Data_corrected_2_3999-7000", "w")
+    data_file = open("Patch_Con_Data_corrected_3_coords_0-3000.txt", "w")
     print("Writing Values to File")
-    for i in range(10000, 12292):
+    for i in range(0, 3000):
         data_file.write(str(i) +"\t" + str(dpck[i]) + "\t" + str(dpck_intra[i]) + "\t" +
-                str(dpck_flux[i]) + "\t" + str(dpck_connector[i]) + "\n")
+                str(dpck_flux[i]) + "\t" + str(dpck_connector[i]) +  "\t" + str(long[i]) + "\t" + str(lat[i]) + "\n")
     data_file.close()
 
 
