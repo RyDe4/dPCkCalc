@@ -7,6 +7,8 @@ from matplotlib.collections import PatchCollection
 import shapely.geometry
 import numpy as np
 from descartes.patch import PolygonPatch
+import matplotlib
+
 
 def make_igraph_graph(p_matrix):
     g = igraph.Graph.Adjacency((p_matrix > 0).tolist(), mode="DIRECTED")
@@ -64,21 +66,29 @@ def graph_vis(igraph_g, num_nodes, img_dims = 400, spatial = False, coord_long =
     igraph.plot(igraph_g, out_name, **visual_style)
 
 
-def map_visualize(pc_data, lats, longs):
+def map_visualize(pc_data, lats, longs, x_left, x_right, y_bottom, y_top):
     #use subplots to add points on top of world map
     fig, ax = plt.subplots(1)
 
     #create a colourmap scaled by the given metric
-    cmap = plt.get_cmap('plasma')
-    colors = cmap(100 * pc_data)
+    cmap = plt.get_cmap('hot_r')
+    color_map = matplotlib.cm.ScalarMappable(cmap=cmap)
+    #TODO modify multiplier to be more general
+    colors = color_map.to_rgba(x=pc_data)
+
+
+    #restrict view to geographic bounds
+    plt.axis([x_left, x_right, y_bottom, y_top])
+    shrinkage_factor = min(abs(x_right - x_left)/360, abs(y_top - y_bottom)/180)
 
     # generate point polygons to plot
     points = []
+    #TODO move coordinate adjustment outside this function
     for i in range(12292):
         if longs[i] > 180:
             longs[i] = -(360 - longs[i])
         point = shapely.geometry.Point(longs[i], lats[i])
-        circle = point.buffer(0.5)
+        circle = point.buffer(0.35*shrinkage_factor)
         patch = PolygonPatch(circle, facecolor=colors[i], edgecolor=colors[i], alpha=0.7, zorder=2)
         points.append(patch)
     #put the points in a collection and plot them
@@ -86,7 +96,25 @@ def map_visualize(pc_data, lats, longs):
     ax.add_collection(collection)
     collection.set_color(colors)
     world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
-    world.plot(ax=ax)
+    world.plot(ax=ax, facecolor='green')
+    plt.colorbar(matplotlib.cm.ScalarMappable(cmap=cmap), ax=ax)
     plt.show()
 
 
+# def main():
+#     long = load_csv_data('Longitd', "../scaled_scores_latlong_reproj_SJ.csv")
+#     lat = load_csv_data('Latitud', "../scaled_scores_latlong_reproj_SJ.csv")
+#     mat = load_matrix(12292, "../R_to_Py_connmat_reduced")
+#     data = load_pc_data("../Patch_Con_Data_corrected_3_0-2000")
+#
+#     map_visualize(data[:, 1], lat, long, -85, -73, 19, 25)
+#
+#     # g = make_igraph_graph(mat)
+#     # print(g.clusters(mode=igraph.STRONG))
+#     # long = load_csv_data("Longitd", "../scaled_scores_latlong_reproj_SJ.csv")
+#     # lat = load_csv_data("Latitud", "../scaled_scores_latlong_reproj_SJ.csv")
+#     # graph_vis(g, 12292, 5000, True, long, lat)
+#
+#
+# if __name__ == '__main__':
+#     main()
