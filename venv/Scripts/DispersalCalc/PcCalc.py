@@ -142,7 +142,6 @@ def calc_dpc_all(conn_data_path, scores_path, output_path, scores_colname, num_p
                                                               dpck_flux[i - start_patch])
         print("Done patch " + str(i))
 
-    #TODO add lat and long to output
     print("Done calculating values")
     data_file = open(output_path, "w")
     print("Writing Values to File")
@@ -152,6 +151,3 @@ def calc_dpc_all(conn_data_path, scores_path, output_path, scores_colname, num_p
                         str(dpck_flux[i - start_patch]) + "\t" + str(dpck_connector[i - start_patch]) + "\n")
     data_file.close()
 
-if __name__ == "__main__":
-    calc_dpc_all("../R_to_Py_connmat_reduced", "../scaled_scores_latlong_reproj_SJ.csv", "Patch_con_5_7000-9000",
-                 "Avg_rescor", 12292, 7000, 9000, True, 1)
