@@ -10,21 +10,32 @@ from descartes.patch import PolygonPatch
 import matplotlib
 import seaborn as sb
 import math
+import statistics
 
 def make_igraph_graph(p_matrix):
     g = igraph.Graph.Adjacency((p_matrix > 0).tolist(), mode="DIRECTED")
     return g
 
-def plot_smoothed_density_all(data):
-    sb.displot(data[:, 1], kde=True)
+def plot_smoothed_density_all(dpck_data, intra_data, flux_data, connector_data, titles):
+    hist_kw = {"bins" : 100}
+    sb.displot(dpck_data, kde=True, kind="hist", **hist_kw)
+    plt.title(titles[0])
+    plt.subplots_adjust(top=0.945, bottom=0.102, left=0.14, right=0.97, hspace=0.2, wspace=0.2)
     plt.show()
-    sb.displot(data[:, 2], kde=True)
+    sb.displot(intra_data, kde=True, kind="hist", **hist_kw)
+    plt.title(titles[1])
+    plt.subplots_adjust(top=0.945, bottom=0.102, left=0.14, right=0.97, hspace=0.2, wspace=0.2)
     plt.show()
-    sb.displot(data[:, 3], kde=True)
+    sb.displot(flux_data, kde=True, kind="hist", **hist_kw)
+    plt.title(titles[2])
+    plt.subplots_adjust(top=0.945, bottom=0.102, left=0.14, right=0.97, hspace=0.2, wspace=0.2)
     plt.show()
-    sb.displot(data[:, 4], kde=True)
+    sb.displot(connector_data, kde=True, kind="hist", **hist_kw)
+    plt.title(titles[3])
+    plt.subplots_adjust(top=0.945, bottom=0.102, left=0.14, right=0.97, hspace=0.2, wspace=0.2)
     plt.show()
-    sb.kdeplot(data={"dpck": data[:, 1], "dpck_intra": data[:, 2], "dpck_flux": data[:, 3], "dpck_connector": data[:, 4]})
+    sb.kdeplot(data={"dpck": dpck_data, "dpck_intra": intra_data, "dpck_flux": flux_data, "dpck_connector": connector_data})
+    plt.subplots_adjust(top=0.945, bottom=0.102, left=0.122, right=0.97, hspace=0.2, wspace=0.2)
     plt.show()
 
 def load_pc_data(data_len, file_path):
@@ -44,14 +55,12 @@ def load_pc_data(data_len, file_path):
 def pie_composition(dpck_data, intra_data, flux_data, connector_data, title, percentile = None, top_percent = True):
     intra_total = 0
     flux_total = 0
-    connector_total = 0
 
     #sort the data
     indices = np.argsort(dpck_data)
     dpck_data = dpck_data[indices]
     intra_data = intra_data[indices]
     flux_data = flux_data[indices]
-    connector_data = connector_data[indices]
 
     if percentile is not None:
         keep = math.ceil(percentile / 100 * len(dpck_data))
@@ -81,7 +90,7 @@ def pie_composition(dpck_data, intra_data, flux_data, connector_data, title, per
     plt.title(title)
     plt.show()
 
-def graph_map(pc_data, g, lats, longs, x_left, x_right, y_bottom, y_top, scale_factor = 1, arrow_scale = 1,
+def graph_map(basemap_path, pc_data, g, lats, longs, x_left, x_right, y_bottom, y_top, scale_factor = 1, arrow_scale = 1,
               bound_poly = None, value_cap = False):
     # use subplots to add points on top of world map
     fig, ax = plt.subplots(1)
@@ -90,6 +99,8 @@ def graph_map(pc_data, g, lats, longs, x_left, x_right, y_bottom, y_top, scale_f
     if value_cap:
         display_data = pc_data.copy()
         display_data[np.argwhere(pc_data > value_cap)] = value_cap
+    else:
+        display_data = pc_data
 
     # create a colourmap scaled by the given metric
     cmap = plt.get_cmap('hot_r')
@@ -116,22 +127,20 @@ def graph_map(pc_data, g, lats, longs, x_left, x_right, y_bottom, y_top, scale_f
     collection = PatchCollection(points)
     ax.add_collection(collection)
     collection.set_color(colors)
-    #world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
-    world = gpd.read_file("C:/Users/Ryan/Downloads/ne_50m_admin_0_countries_lakes/ne_50m_admin_0_countries_lakes.dbf")
+    world = gpd.read_file(basemap_path)
     world.plot(ax=ax, facecolor='green')
     plt.colorbar(matplotlib.cm.ScalarMappable(cmap=cmap), ax=ax)
 
     #create arcs
-    style = "Simple, tail_width=0.02, head_width=" + str(1*arrow_scale) + ", head_length=" + str(2*arrow_scale)
-    arrow_kw = dict(arrowstyle=style, color="black")
+    style = "Simple, tail_width=0.0001, head_width=" + str(1*arrow_scale) + ", head_length=" + str(2*arrow_scale)
+    arrow_kw = dict(arrowstyle=style, color="black", lw=0.1)
 
-    for i in range(2000):
+    for i in range(len(display_data)):
         if bound_poly is not None and x not in in_scope:
             continue
         #get out neighbours
         out_neighbours = g.neighbors(i, mode = "out")
         #get in neighbours
-        in_neighbours = g.neighbors(i, mode = "in")
         for x in out_neighbours:
             if bound_poly is not None and x not in in_scope:
                 continue
@@ -142,8 +151,8 @@ def graph_map(pc_data, g, lats, longs, x_left, x_right, y_bottom, y_top, scale_f
 
     plt.show()
 
-def map_visualize(pc_data, lats, longs, x_left, x_right, y_bottom, y_top, scale_factor, polygon_bound = None,
-                  value_cap = False):
+def map_visualize(basemap_path, pc_data, lats, longs, x_left, x_right, y_bottom, y_top, scale_factor, polygon_bound = None,
+                  plot_poly = False, value_cap = False):
     #use subplots to add points on top of world map
     fig, ax = plt.subplots(1)
 
@@ -176,9 +185,10 @@ def map_visualize(pc_data, lats, longs, x_left, x_right, y_bottom, y_top, scale_
     ax.add_collection(collection)
     collection.set_color(colors)
     # world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
-    world = gpd.read_file("C:/Users/Ryan/Downloads/ne_50m_admin_0_countries_lakes/ne_50m_admin_0_countries_lakes.dbf")
+    world = gpd.read_file(basemap_path)
     world.plot(ax=ax, facecolor='green')
-    ax.add_patch(PolygonPatch(polygon_bound))
+    if plot_poly:
+        ax.add_patch(PolygonPatch(polygon_bound, alpha=0.1))
     plt.colorbar(matplotlib.cm.ScalarMappable(cmap=cmap), ax=ax)
     plt.show()
 
@@ -194,29 +204,33 @@ def get_in_bounds(data, lats, longs, polygon):
 
     return np.array(data_keep), np.array(lats_keep), np.array(longs_keep)
 
-def main():
-    long = load_csv_data('Longitd', "../scaled_scores_latlong_reproj_SJ.csv")
-    lat = load_csv_data('Latitud', "../scaled_scores_latlong_reproj_SJ.csv")
-    mat = load_matrix(12292, "../R_to_Py_connmat_reduced", 1)
-    data = load_pc_data(7000, "Patch_con_5.txt")
+def avg_dist_edge(g, patch_id, lats, longs):
+    out_neighbours = g.neighbors(patch_id, mode="out")
+    in_neighbours = g.neighbors(patch_id, mode="in")
+    if len(out_neighbours) == 0 or len(in_neighbours) == 0:
+        return 0
+    distances = []
+    for i in in_neighbours:
+        dist = math.sqrt(abs(lats[patch_id] - lats[i]) + abs(longs[patch_id] - longs[i]))
+        distances.append(dist)
+    for i in out_neighbours:
+        dist = math.sqrt(abs(lats[patch_id] - lats[i]) + abs(longs[patch_id] - longs[i]))
+        distances.append(dist)
 
-    pie_composition(data[:, 1], data[:, 2], data[:, 3], data[:, 4], "dPCk Fractions Top 10th Percentile", 10, True)
+    return statistics.mean(distances)
 
-    for i in range(12292):
-        if long[i] > 180:
-            long[i] = -(360 - long[i])
+def scatter_edge_dist(g, data, lats, longs, title, x_lab, y_lab):
+    x = np.zeros((len(data)))
+    y = np.zeros((len(data)))
+    for i in range(len(data)):
+        x[i] = (data[i])
+        y[i] = (avg_dist_edge(g, i, lats, longs)*111)
+    indices = np.argwhere(y > 0)
+    x = x[indices]
+    y = y[indices]
+    sb.regplot(x=x, y=y)
+    plt.xlabel(x_lab)
+    plt.ylabel(y_lab)
+    plt.title(title)
+    plt.show()
 
-    bound_poly = shapely.geometry.Polygon([[-62, 15], [-62, 17],
-                                           [-60, 15], [-60, 17]])
-    data_bound, lat_bound, long_bound = get_in_bounds(data[:, 1], lat, long, bound_poly)
-    map_visualize(data_bound, lat_bound, long_bound, -85, -73, 19, 25, scale_factor=1, value_cap=0.025,
-                  polygon_bound=bound_poly)
-
-    plot_smoothed_density_all(data)
-    # g = make_igraph_graph(mat)
-    #
-    # graph_map(data[:, 1], g, lat, long, -62, -60, 15, 17, scale_factor=5, arrow_scale=2)
-
-
-if __name__ == '__main__':
-    main()
