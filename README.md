@@ -4,7 +4,9 @@ A package for calculating and visualizing the dPCk of patches in a fragmented la
 
 To get information on how to use some of the functions in this package, type help("function_name") in the python console after importing the function.
 
-To install: pip install git+https://github.com/RyDe4/dPCkCalc
-
+To install: 
+```
+pip install git+https://github.com/RyDe4/dPCkCalc
+```
 Currently, the modules for this package must be imported independently. The two modules are PcCalc and Visualization
 
