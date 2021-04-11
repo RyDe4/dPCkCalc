@@ -8,5 +8,14 @@ To install:
 ```
 pip install git+https://github.com/RyDe4/dPCkCalc
 ```
+
+### Troubleshooting
+If you encounter errors during installation, try forcing installation without dependencies:
+
+```
+pip install git+https://github.com/RyDe4/dPCkCalc --no-deps
+```
+You can then install the dependencies independently. numpy and igraph are required for most of the functions in the PcCalc modules, and numpy, igraph, descartes, shapely, geopandas, and seaborn are required for many of the functions in the Visualization module.
+
 Currently, the modules for this package must be imported independently. The two modules are PcCalc and Visualization
 
