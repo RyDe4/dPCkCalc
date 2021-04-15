@@ -23,4 +23,4 @@ Currently, the modules for this package must be imported independently. The two 
 
 ![](carribean_arrow.png)
 
-![](coral_reefs_worldwide.png)
+![](worldwide_reefs_dpck.png)
