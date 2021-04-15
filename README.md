@@ -21,6 +21,7 @@ Currently, the modules for this package must be imported independently. The two 
 
 ### Gallery
 
+<img src="sample_images/carribean_arrow_2.PNG" width="40%">
 ![](sample_images/carribean_arrow_2.PNG)
 
 ![](sample_images/dpck_reefs_worldwide_2.png)
