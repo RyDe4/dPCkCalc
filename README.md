@@ -21,8 +21,8 @@ Currently, the modules for this package must be imported independently. The two 
 
 ### Gallery
 
-![](dPCkCalc/sample_images/carribean_arrow_2.PNG)
+![](sample_images/carribean_arrow_2.PNG)
 
-![](dPCkCalc/sample_images/dpck_reefs_worldwide_2.png)
+![](sample_images/dpck_reefs_worldwide_2.png)
 
-![](dPCkCalc/sample_images/hawaii_arrow_2.png)
+![](sample_images/hawaii_arrow_2.png)
