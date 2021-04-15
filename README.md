@@ -25,4 +25,4 @@ Currently, the modules for this package must be imported independently. The two 
 
 <img src="sample_images/dpck_reefs_worldwide_2.PNG" width="60%">
 
-<img src="sample_images/hawaii_arrow_2.PNG" width="60%">
+<img src="sample_images/hawaii_arrow.PNG" width="60%">
