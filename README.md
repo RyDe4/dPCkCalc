@@ -19,3 +19,8 @@ You can then install the dependencies independently. numpy and igraph are requir
 
 Currently, the modules for this package must be imported independently. The two modules are PcCalc and Visualization
 
+### Gallery
+
+![](carribean_arrow.png)
+
+![](worldwide_reefs_dpck.png)
