@@ -1,16 +1,16 @@
 import unittest
 import numpy as np
 import igraph
-from DispersalCalc import calc_pc_numerator
-from DispersalCalc import make_removed
-from DispersalCalc import calc_dpck
-from DispersalCalc import calc_dpck_intra
-from DispersalCalc import calc_dpck_flux
-from DispersalCalc import calc_dpck_connector
-from DispersalCalc import load_matrix
-from DispersalCalc import load_csv_data
-from DispersalCalc import calc_dpc_all
-from DispersalCalc import load_pc_data
+from dPCkCalc import calc_pc_numerator
+from dPCkCalc import make_removed
+from dPCkCalc import calc_dpck
+from dPCkCalc import calc_dpck_intra
+from dPCkCalc import calc_dpck_flux
+from dPCkCalc import calc_dpck_connector
+from dPCkCalc import load_matrix
+from dPCkCalc import load_csv_data
+from dPCkCalc import calc_dpc_all
+from dPCkCalc import load_pc_data
 import pytest
 
 class Test_pc_functions(unittest.TestCase):
@@ -51,16 +51,6 @@ class Test_pc_functions(unittest.TestCase):
         # find the highest probability path between patches using dijkstra with 1 on diag and then undoing -log operation
         init_probs_2 = np.exp(-1 * np.array(g_2.shortest_paths_dijkstra(weights='weight')))
         init_pc_2 = calc_pc_numerator(init_probs_2, self.testScores2)
-        print(init_pc_2)
-        g_removed_probs_2_0 = make_removed(0, g_2)
-        dpck = calc_dpck(0, g_removed_probs_2_0, self.testScores2, init_pc_2)
-        print(dpck)
-        intra = calc_dpck_intra(0, self.testScores2, init_pc_2)
-        print(intra)
-        flux = calc_dpck_flux(0, init_probs_2, self.testScores2, init_pc_2, 4)
-        print(flux)
-        print(calc_dpck_connector(dpck, intra, flux))
-
 
 
     def test_calc_dpck_multiple(self):
@@ -93,7 +83,7 @@ class Test_pc_functions(unittest.TestCase):
         # find the highest probability path between patches using dijkstra with 1 on diag and then undoing -log operation
         init_probs = np.exp(-1 * np.array(g.shortest_paths_dijkstra(weights='weight')))
         init_pc = calc_pc_numerator(init_probs, self.testScores1)
-        assert pytest.approx(calc_dpck_flux(0, init_probs, self.testScores1, init_pc, 4), 0.000001) == 10.9014675
+        assert pytest.approx(calc_dpck_flux(0, init_probs, self.testScores1, init_pc, 4), 0.000001) == 12.78825996
 
 
     def test_calc_dpck_connector(self):
@@ -111,13 +101,13 @@ class Test_pc_functions(unittest.TestCase):
 
 
     def test_load_matrix(self):
-        mat = load_matrix(4, "../test_set1.txt")
+        mat = load_matrix(4, "test_set1.txt")
         self.assertEqual(mat.all(), self.testProbs1.all())
 
     def test_dpc_all(self):
-        mat = load_matrix(4, "../test_set1.txt")
-        scores = load_csv_data("scores", "../test_set1.csv")
-        calc_dpc_all("../test_set1.txt", "../test_set1.csv", "test1_output_file.txt", "scores", 4, 0, 4)
+        mat = load_matrix(4, "test_set1.txt")
+        scores = load_csv_data("scores", "test_set1.csv")
+        calc_dpc_all("test_set1.txt", "test_set1.csv", "test1_output_file.txt", "scores", 4, 0, 4)
         results = load_pc_data(4, "test1_output_file.txt")
         assert pytest.approx(results[0,1], 0.000001) == 18.23899371
 
