@@ -1,6 +1,4 @@
 import igraph
-from PcCalc import load_matrix
-from PcCalc import load_csv_data
 import geopandas as gpd
 import matplotlib.pyplot as plt
 from matplotlib.collections import PatchCollection
@@ -13,6 +11,11 @@ import math
 import statistics
 
 def make_igraph_graph(p_matrix):
+    """Create a directed igraph graph object from an numpy adjacency matrix that could contain zeroes.
+
+    :param p_matrix: a 2D numpy array representing a graph in adjacency matrix form
+    :return: an igraph graph
+    """
     g = igraph.Graph.Adjacency((p_matrix > 0).tolist(), mode="DIRECTED")
     return g
 
@@ -39,6 +42,14 @@ def plot_smoothed_density_all(dpck_data, intra_data, flux_data, connector_data, 
     plt.show()
 
 def load_pc_data(data_len, file_path):
+    """Load PC data into a numpy array
+
+    :param data_len: the number of patches in the input file
+    :param file_path: the path to the file with the connectivity data. Should be in the format output by
+     PcCalc.calc_dpc_all
+    :return: a 2D numpy ndarray with column 0 representing the patch numbers, column 1 containing the dPCk for the patch
+    indicated in column 0, column 2 is intra, column 3 is flux, column 4 is connector
+    """
     mat_file = open(file_path, "r")
     data = mat_file.readlines()
     mat_file.close()
@@ -53,6 +64,21 @@ def load_pc_data(data_len, file_path):
     return data_arr
 
 def pie_composition(dpck_data, intra_data, flux_data, connector_data, title, percentile = None, top_percent = True):
+    """Create a pie chart of the contribution of each dPCk fraction
+
+    :param dpck_data: numpy array of dPCk data
+    :param intra_data: numpy array of dPCk intra data
+    :param flux_data: numpy array of dPCk flux data
+    :param connector_data: numpy array of dPCk connector data
+    :param title: String indicating the title for the pie chart
+    :param percentile: the top or bottom percentile for the pie chart
+    :param top_percent: if True, percentile indicates the top "percentile" percentile. If false, percentile indicates
+    the bottom "percentile" percentile. Defaults to True.
+
+    Create a pie chart of the average contribution of each dPCk fraction to the total dPCk for each patch. The
+    percentile and top_percentile parameters indicate if only patches in a top percentile or bottom percentile should
+    be considered.
+    """
     intra_total = 0
     flux_total = 0
 
@@ -92,6 +118,31 @@ def pie_composition(dpck_data, intra_data, flux_data, connector_data, title, per
 
 def graph_map(basemap_path, pc_data, g, lats, longs, x_left, x_right, y_bottom, y_top, scale_factor = 1, arrow_scale = 1,
               bound_poly = None, value_cap = False):
+    """Visualize patches on a map, with patches represented as coloured points and dispersal represented by arrows
+
+    :param basemap_path: Path to the basemap file. File should be dbf or any other format readable by the GeoPandas
+    read_file() function
+    :param pc_data: a numpy array containing the data values for each path
+    :param g:
+    :param lats: a numpy array of the latitudes of each patch, with the value at each indices corresponding to the value
+    at the same indice of the pc_data array
+    :param longs: a numpy array of the longitudes of each patch, with the value at each indices corresponding to the value
+    at the same indice of the pc_data array
+    :param x_left: the left longitude bound on the map's view
+    :param x_right: the right longitude bound on the map's view
+    :param y_bottom: the bottom latitude bound on the map's view
+    :param y_top: the top latitude bound on the map's view
+    :param scale_factor: positive int indicating the size of the patch points, with a larger number
+    corresponding to a larger point
+    :param arrow_scale: positive int, with larger values indicating thicker arrows
+    :param bound_poly: a shapely polygon indicating which patches should be shown. Only patches within the polygon
+    are shown
+    :param value_cap: double, scales all pc_data values larger than value_cap to be equal to value cap. Can help with
+    colourmap issues if the is a small number of patches with very large pc_data values.
+
+    Create a map showing patches as small circles, with patches coloured based on some data value, and arrows indicating
+    dispersal between patches.
+    """
     # use subplots to add points on top of world map
     fig, ax = plt.subplots(1)
 
@@ -153,6 +204,29 @@ def graph_map(basemap_path, pc_data, g, lats, longs, x_left, x_right, y_bottom, 
 
 def map_visualize(basemap_path, pc_data, lats, longs, x_left, x_right, y_bottom, y_top, scale_factor, polygon_bound = None,
                   plot_poly = False, value_cap = False):
+    '''Visualize patches on a map, with patches represented as coloured points
+
+    :param basemap_path: Path to the basemap file. File should be dbf or any other format readable by the GeoPandas
+    read_file() function
+    :param pc_data: a numpy array containing the data values for each path
+    :param lats: a numpy array of the latitudes of each patch, with the value at each indices corresponding to the value
+    at the same indice of the pc_data array
+    :param longs: a numpy array of the longitudes of each patch, with the value at each indices corresponding to the value
+    at the same indice of the pc_data array
+    :param x_left: the left longitude bound on the map's view
+    :param x_right: the right longitude bound on the map's view
+    :param y_bottom: the bottom latitude bound on the map's view
+    :param y_top: the top latitude bound on the map's view
+    :param scale_factor: the scale factor for the size of the patch points, with a larger number corresponding to a
+    larger point
+    :param polygon_bound: a shapely polygon indicating which patches should be shown. Only patches within the polygon
+    are shown
+    :param plot_poly: boolean, if true the polygon_bound is shown on the map
+    :param value_cap: double, scales all pc_data values larger than value_cap to be equal to value cap. Can help with
+    colourmap issues if the is a small number of patches with very large pc_data values.
+
+    Create a map showing patches as small circles, with patches coloured based on some data value.
+    '''
     #use subplots to add points on top of world map
     fig, ax = plt.subplots(1)
 
@@ -184,7 +258,6 @@ def map_visualize(basemap_path, pc_data, lats, longs, x_left, x_right, y_bottom,
     collection = PatchCollection(points)
     ax.add_collection(collection)
     collection.set_color(colors)
-    # world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
     world = gpd.read_file(basemap_path)
     world.plot(ax=ax, facecolor='green')
     if plot_poly:
