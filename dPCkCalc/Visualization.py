@@ -41,12 +41,14 @@ def plot_smoothed_density_all(dpck_data, intra_data, flux_data, connector_data, 
     plt.subplots_adjust(top=0.945, bottom=0.102, left=0.122, right=0.97, hspace=0.2, wspace=0.2)
     plt.show()
 
-def load_pc_data(data_len, file_path):
+def load_pc_data(data_len, file_path, coords =False):
     """Load PC data into a numpy array
 
     :param data_len: the number of patches in the input file
     :param file_path: the path to the file with the connectivity data. Should be in the format output by
      PcCalc.calc_dpc_all
+    :param coords: True if the last to columns of input file contain latitude and longitude coordinates. False by
+    defualt.
     :return: a 2D numpy ndarray with column 0 representing the patch numbers, column 1 containing the dPCk for the patch
     indicated in column 0, column 2 is intra, column 3 is flux, column 4 is connector
     """
@@ -55,7 +57,10 @@ def load_pc_data(data_len, file_path):
     mat_file.close()
     data_arr = np.zeros((data_len, 5), dtype=np.float64)
     for line in data:
-        i, dpck, dpck_intra, dpck_flux, dpck_connector = str.split(line, "\t")
+        if coords == False:
+            i, dpck, dpck_intra, dpck_flux, dpck_connector = str.split(line, "\t")
+        else:
+            i, dpck, dpck_intra, dpck_flux, dpck_connector, lat, long = str.split(line, "\t")
         data_arr[int(i)][0] = i
         data_arr[int(i)][1] = dpck
         data_arr[int(i)][2] = dpck_intra
