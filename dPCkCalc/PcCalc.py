@@ -105,6 +105,8 @@ def calc_pc_numerator(p_matrix, scores):
     A common currency for the different ways in which patches and links can contribute to habitat
     availability and connectivity in the landscape DOI:  https://doi.org/10.1111/j.1600-0587.2009.05760.x
     """
+    if p_matrix.shape[0] != len(scores):
+        raise Exception("matrix dimensions must be equal to length of scores vector")
     numerator = np.sum(np.dot(scores, np.dot(scores.transpose(), p_matrix)))
     return numerator
 
@@ -119,8 +121,11 @@ def calc_pc(p_matrix, scores):
         A common currency for the different ways in which patches and links can contribute to habitat
         availability and connectivity in the landscape DOI:  https://doi.org/10.1111/j.1600-0587.2009.05760.x
         """
+    if p_matrix.shape[0] != len(scores):
+        raise Exception("matrix dimensions must be equal to length of scores vector")
     numerator = calc_pc_numerator(p_matrix, scores)
     return numerator/np.sum(scores)
+
 
 def load_csv_data(colname, file_path):
     """Load a csv column into a numpy array
